@@ -1,45 +1,42 @@
 # CASE checkout
 
-A fixed basket for one iPhone case: HKD 100.00 or EUR 12.00. Express creates a Checkout.com Payment Session, and the browser mounts Flow from the official CDN. Card fields and 3DS are handled by Flow; the application receives an opaque submission token, never raw card data.
+One iPhone case, priced at HKD 100.00 or EUR 12.00. The backend creates a Payment Session and the browser displays Checkout.com Flow.
 
-## Part 2 — Checkout demo
+## Setup
 
-- Fixed basket for one iPhone case, using the supplied color palette.
-- Embedded card payments with Checkout.com Flow hosted fields.
-- Server-side Payment Session creation, custom submission and payment-status retrieval.
-- Successful sandbox card payments confirmed as Captured.
-- Result handling for successful, declined and pending payments, with explicit retry after a decline and duplicate-submission protection.
-- Responsive checkout layout and in-memory order storage, with no database required.
-
-## Part 3 — Additional customizations
-
-- Collect customer name and email and pass them to the payment API; display and prefill Flow's hosted cardholder-name field.
-- Support English, Traditional Chinese (Hong Kong) and Dutch in the checkout page and Flow.
-- Process HKD and EUR payments using server-controlled prices: HKD 100.00 and EUR 12.00.
-- Enable 3DS, request a challenge and disable non-3DS fallback. Successful and failed authentication paths were tested, including a successful retry under the same order reference.
-
-## Run
-
-Use Node.js 22.12+ and the assignment's **Part 2** sandbox credentials.
+Requires Node.js 22.12+ and the assignment's Part 2 sandbox credentials.
 
 ```sh
 npm ci
 cp .env.example .env
-# Set the public key, secret key and processing channel in .env.
+```
+
+Set `CKO_PUBLIC_KEY`, `CKO_SECRET_KEY`, `CKO_PROCESSING_CHANNEL_ID` and the account's sandbox `CKO_API_BASE` in `.env`, then run:
+
+```sh
 npm start
 ```
 
-Open http://localhost:3000. When changing ports, update both `PORT` and `APP_URL`; use exactly that browser origin. Set `CKO_API_BASE` to the sandbox endpoint supplied for the account. Public-key scopes include `payment-sessions:pay` and `vault-tokenization`; the secret key needs session creation/submission and payment retrieval access. Credentials are not included.
+Open http://localhost:3000. For another port, update both `PORT` and `APP_URL` and open that exact address. Credentials are excluded from the repository.
 
-## Payment flow
+## Customer journey
 
-1. Choose currency, billing country and language; enter name/email.
-2. Continue creates a session using the server's fixed price. Changing details clears the hosted form and invalidates the previous local attempt.
-3. Flow sends its opaque token through `handleSubmit`. The backend locks the attempt before calling Checkout.com and returns the provider's submission response unchanged.
-4. The result view retrieves payment details and checks the order reference, attempt, amount and currency. Captured means paid; authorized or pending stays locked until resolved.
-5. An explicit decline permits a new attempt under the same order. A timeout is not treated as a decline and cannot automatically create another charge.
+1. Review the basket, choose currency, billing country and language, then enter name and email.
+2. Continue loads Flow. Changing details before payment clears the card form and prepares a new session on the next Continue.
+3. Pay in the hosted form and complete 3DS if requested. Settings are disabled during submission, and the backend rejects duplicate submissions.
+4. The result page retrieves the payment status from Checkout.com and checks that it matches the order. Captured shows success. Authorized or Pending continues checking, with a manual status button after automatic checks stop.
+5. A decline offers Back to checkout. Retrying creates a new payment attempt under the same order reference. A timeout keeps the order awaiting confirmation rather than submitting another payment.
+6. Reloading retrieves the existing order. After a successful payment, the customer can confirm starting a separate new order.
 
-English, Traditional Chinese (Hong Kong) and Dutch are supported. The cardholder-name field is hosted by Flow; the separate customer name/email are sent in the session's `customer` object. Currency and billing country are independent. Prices are fixed catalog values, not an exchange-rate conversion.
+The basket stays visible throughout. Billing country is independent of currency, and prices are set by the server. Customer name/email go into the session's `customer` object; Flow also displays a hosted cardholder-name field.
+
+## Flow control
+
+`public/app.js` handles form changes, Flow callbacks and result polling. `server.js` creates and submits sessions, prevents repeat submissions and retrieves payments. `domain.js` defines prices, validates input and decides whether another attempt is allowed.
+
+The backend submits Flow's opaque `session_data` and returns the provider response unchanged so Flow can handle authentication. It confirms the order reference, attempt, amount and currency before updating the result. Status checks run every 2.5 seconds, up to 12 times, and can then be requested manually.
+
+Orders exist only in the running server process. Restarting loses them; an old browser order cannot automatically start another payment. A submission with an unknown outcome and no payment ID needs manual reconciliation.
 
 ## Tests
 
@@ -49,41 +46,25 @@ npx playwright install chromium
 npm run test:journey
 ```
 
-The first command tests application rules with a fake provider. The second suite tests browser behavior with a stub SDK/provider. Neither submits real payments.
+`npm test` checks backend rules and logging with a fake provider. `test:journey` checks the browser journey with a stub SDK/provider.
 
-With the app running and sandbox credentials configured:
+With the application running and `.env` configured:
 
 ```sh
 npm run test:browser
 ```
 
-This suite uses official sandbox test cards and performs sandbox payments. It covers hosted fields, HKD/EUR, 3DS, decline/retry, leaving authentication, localization and mobile width. Use `BROWSER_EXECUTABLE` to select an existing Chrome executable if needed. Reports are generated in ignored `test-results/`; screenshots are not required.
+This runs real sandbox card payments, including HKD/EUR, 3DS, decline/retry, languages and mobile layout. `BROWSER_EXECUTABLE` can select an existing Chrome installation. Reports are written to the ignored `test-results/` directory.
 
-## Validation
+On 17 November 2026, 20 local tests, four simulated browser checks and 24 live sandbox checks passed. The live run used `ENABLE_RISK=false`, as set in `.env.example`, to test the payment journey independently of shared-account risk rules. Leaving the authentication page resulted in Pending, with another payment blocked.
 
-On 17 November 2026, 20 local tests, four synthetic browser checks and 24 live sandbox checks passed. HKD/EUR payments and the decline-to-retry flow reached Captured. The live suite used `ENABLE_RISK=false`; leaving 3DS remained Pending with retry blocked.
+## Logs
 
-## Implementation
-
-- `domain.js`: catalog, input validation, session payload and payment state rules.
-- `server.js`: routes, submission lock, payment reconciliation and optional webhook receiver.
-- `public/app.js`: Flow lifecycle, input controls, results and polling.
-- `public/translations.js`: customer-facing translations.
-- `payment-log.js`: allowlisted lifecycle logging with bounded file rotation.
-
-Orders and attempts are in memory, as permitted by the brief. A restart invalidates browser order tokens. The server supports one process; the lock is not durable or distributed idempotency. An uncertain submission without a payment ID requires manual reconciliation. Production would need persistent order state and reliable webhook processing before fulfillment.
-
-Logs are written to `logs/payments.jsonl` and the terminal, using reference, attempt ID and payment ID for correlation. Keys, names, emails, card fields, session tokens and raw provider responses are excluded. Log failures do not interrupt payment handling.
-
-## Sandbox configuration
-
-**Sandbox risk screening:** `.env.example` sets `ENABLE_RISK=false` to isolate functional testing from shared-account risk rules. Set it to `true` to exercise screening; an unset value also enables it. A valid payment can then be declined by risk rules (for example, code 42101), including on retry. This switch is limited to the sandbox-only application.
-
-3DS is enabled with non-3DS fallback disabled and a challenge requested. The issuer controls the authentication experience. Closing authentication can leave a payment pending; it does not establish cancellation. Hosted fields reduce exposure to card data but are not a claim of PCI certification. 
+Payment events appear in the terminal and `logs/payments.jsonl`. Order reference, attempt ID and payment ID can be used to follow a payment. Customer details, keys and payment tokens are excluded.
 
 ## References
 
 - [Flow integration](https://www.checkout.com/docs/get-started)
-- [Payment Sessions and custom submission](https://api-reference.checkout.com/tag/flow)
-- [Payment retrieval](https://api-reference.checkout.com/tag/payments)
+- [Payment Sessions](https://api-reference.checkout.com/tag/flow)
+- [Payments API](https://api-reference.checkout.com/tag/payments)
 - [Sandbox test cards](https://www.checkout.com/docs/developer-resources/testing/test-cards)
