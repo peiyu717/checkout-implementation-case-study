@@ -1,0 +1,94 @@
+Checkout.com Part 1 API Investigation
+Postman sandbox tests | 16 November 2026 | POST /payments
+Each request includes the explanation, exact changes and all notes and recorded responses from the original document. Diff notation: − before, + after. Authorization success, capture and final payment completion are distinguished below.
+
+Request 01 — Invalid request body and expired test card
+Changes made
+- "processing_channel_id": "pc_zs5fqhybzc2e3jmq3efvybybpq",
++ "processing_channel_id": "pc_zs5fqhybzc2e3jmq3efvybybpq"
+- "merchant_initiated": "first"
++ "merchant_initiated": false
+- "expiry_year": 2025
++ "expiry_year": 2030
+Explanation and complete recorded results
+The original request contained a trailing comma after processing_channel_id and supplied "first" for merchant_initiated, which requires a Boolean value. The request returned request_body_malformed. Removing the trailing comma alone did not resolve the error.
+For this customer-initiated card verification, I changed merchant_initiated to false. The next response returned card_expired, as the supplied test card expiry was August 2025. I then updated the sandbox test expiry year to 2030.
+The final response returned approved: true, status: "Card Verified" and response_code: "10000". I retained amount: 0 because the request performs card verification. This result confirms successful sandbox card verification, rather than a captured purchase payment.
+
+Reference links
+https://api-reference.checkout.com/tag/payments
+
+Request 02 — Missing processing channel
+Changes made
++ "processing_channel_id": "pc_zs5fqhybzc2e3jmq3efvybybpq"
+- "expiry_year": 2025
++ "expiry_year": 2030
+Explanation and complete recorded results
+The original request returned processing_channel_id_required, indicating that an explicit processing channel was required for this request and credential configuration.
+I added the processing channel associated with the supplied sandbox credentials. The successful retest also used a future sandbox card expiry year of 2030 instead of the original 2025.
+The response returned approved: true, status: "Card Verified" and response_code: "10000". I retained amount: 0 for card verification; no purchase amount was captured.
+
+https://support.checkout.com/hc/en-us/articles/31181298074770-Add-a-processing-channel-to-an-existing-API-key
+
+You can process API requests for different processing channels using the same API key. If you choose to do so, you must specify the processing channel in your payment request moving forward.
+
+Reference links
+https://support.checkout.com/hc/en-us/articles/31181298074770-Add-a-processing-channel-to-an-existing-API-key
+https://api-reference.checkout.com/tag/payments
+Scope of the conclusion: the observed error requires an explicit channel for this test. The supplied key’s channel associations were not inspected; the documented multi-channel rule is an explanation consistent with the result, not a verified account configuration.
+
+Request 03 — Invalid amount format and expired test card
+Changes made
+- "amount": 10.99
++ "amount": 1099
+- "expiry_year": 2025
++ "expiry_year": 2030
+Explanation and complete recorded results
+The original request returned amount_invalid because amount was supplied as 10.99. The API requires an integer amount in minor currency units. Assuming the intended payment was USD 10.99, I changed the value to 1099 cents.
+The next response returned card_expired, as the supplied expiry was August 2025. I updated the sandbox test expiry year to 2030.
+The final response returned approved: true, status: "Authorized" and response_code: "10000" for USD 10.99. At the time of this response, total_captured was 0, so the observed result confirms successful authorization, not capture or settlement.
+
+Reference links
+https://www.checkout.com/docs/resources/calculating-the-amount
+Field clarification: the retained source quotation mentions an amount within a payment plan. For this request, the relevant field is the top-level POST /payments amount, expressed as integer minor currency units.
+
+Request 04 — Invalid currency and unsupported payment country
+Changes made
+- "currency": "US"
++ "currency": "EUR"
+- "source.payment_country": "DE"
++ "source.payment_country": "BE"
+Explanation and complete recorded results
+The original request returned currency_invalid because "US" is not a valid three-letter currency code. I changed it to "EUR", the processing currency supported for Bancontact.
+The next response returned payment_country_invalid for "DE". Checkout.com lists Belgium as Bancontact’s supported consumer country, so I changed payment_country to "BE".
+The corrected request returned HTTP 202 with status: "Pending" and a redirect link. Opening the link successfully displayed the Bancontact sandbox payment page with the expected amount of EUR 1.00. This confirms that the request was accepted and the customer could proceed to the payment page. Final payment completion was not verified.
+
+Reference links
+https://checkoutdocs.readme.io/docs/bancontact
+https://www.checkout.com/payment-methods/bancontact
+
+Request 05 — Expired test card followed by a payment decline
+Changes made
+- "expiry_year": 2025
++ "expiry_year": 2030
+// Original test card number and amount remain unchanged.
+Explanation and complete recorded results
+The original request returned card_expired, as the supplied card expiry was August 2025. I updated the sandbox test expiry year to 2030 and retained the original card number and amount.
+The retest returned HTTP 201, but the payment was declined: approved: false, status: "Declined" and response_code: "20005" (“Declined - Do Not Honour”).
+
+Reference links
+https://support.checkout.com/hc/en-us/articles/24416729620626-Common-response-codes-to-test
+https://checkoutdocs.readme.io/docs/declined-do-not-honour
+Interpretation: the listed decline causes and customer actions are documented possibilities, not a verified cause for this sandbox transaction. No successful-payment retest was performed.
+
+Request 06 — Incorrect payment source type
+Changes made
+- "source": {"type":"card","id":"{{cko_source_id}}"}
++ "source": {"type":"id","id":"src_p4aqlwk5fd2uxlqaiqt7nqrnem"}
+Explanation and complete recorded results
+The original request supplied a source ID but set source.type to "card". The API therefore expected raw card details and returned card_number_required, card_expiry_month_required and card_expiry_year_required.
+I changed source.type to "id" and replaced {{cko_source_id}} with the actual source.id returned by the successful card verification in Request 02.
+The retest returned approved: true, status: "Authorized" and response_code: "10000" for USD 1.00. This confirmed that the saved card source could be used successfully. At the time of the response, no amount had been captured.
+Reference links
+https://api-reference.checkout.com/tag/payments
+
