@@ -1,0 +1,273 @@
+/* Brand colors and responsive checkout layout. */
+:root {
+  --ink: #323416;
+  --sage: #8c9e6e;
+  --paper: #fffffd;
+  --line: #dce0d4;
+  --muted: #646955;
+  color: var(--ink);
+  background: var(--paper);
+  font:
+    16px/1.5 system-ui,
+    -apple-system,
+    sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+header,
+main,
+footer {
+  max-width: 1080px;
+  margin: auto;
+  padding: 24px;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  font-size: 25px;
+  letter-spacing: 2px;
+  font-weight: 750;
+  color: var(--ink);
+  text-decoration: none;
+}
+.brand span {
+  color: var(--sage);
+}
+.badge {
+  font-size: 12px;
+  background: #edf0e7;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.heading {
+  margin: 24px 0;
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin: 0;
+}
+h1 {
+  font-size: 30px;
+  margin: 8px 0 0;
+  line-height: 1.2;
+}
+h2 {
+  font-size: 19px;
+  margin: 0 0 20px;
+}
+h3 {
+  font-size: 16px;
+  margin: 0;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: 24px;
+  align-items: start;
+}
+.card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 28px;
+  background: var(--paper);
+}
+.basket {
+  background: #f5f6f0;
+}
+.product {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin: 24px 0 32px;
+}
+.product p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 5px 0;
+}
+.case-picture {
+  flex: none;
+  width: 65px;
+  height: 106px;
+  border: 3px solid #768b59;
+  border-radius: 15px;
+  background: var(--sage);
+  padding: 6px;
+}
+.case-picture span {
+  display: block;
+  border: 2px solid #677b4e;
+  width: 23px;
+  height: 28px;
+  border-radius: 7px;
+  background: radial-gradient(circle, #323416 35%, transparent 40%) 1px 1px/10px
+    10px;
+}
+.total {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--line);
+}
+.total strong {
+  font-size: 24px;
+}
+.muted {
+  font-size: 12px;
+  color: var(--muted);
+}
+.reference {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.section-top {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.language-label {
+  max-width: 165px;
+  font-size: 12px !important;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+label span {
+  display: block;
+  margin-bottom: 6px;
+}
+input,
+select {
+  width: 100%;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #b9c0aa;
+  background: var(--paper);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--ink);
+}
+input:focus,
+select:focus,
+button:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 2px;
+}
+button {
+  cursor: pointer;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--paper);
+  font: 600 14px system-ui;
+  padding: 13px 18px;
+}
+button.secondary {
+  background: var(--paper);
+  color: var(--ink);
+}
+button:disabled,
+select:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+#continue {
+  width: 100%;
+}
+#status {
+  margin: 18px 0;
+  padding: 0;
+  font-size: 14px;
+  white-space: pre-line;
+}
+#status:not(:empty) {
+  padding: 14px;
+  background: #edf0e7;
+  border-radius: 6px;
+}
+#status[data-state="failed"],
+#status[data-state="lost"] {
+  background: #fff2ea;
+  color: #79360d;
+}
+#status[data-state="paid"] {
+  background: #e9efdf;
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.security-note {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 24px;
+}
+footer {
+  font-size: 12px;
+  color: var(--muted);
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 700px) {
+  header,
+  main,
+  footer {
+    padding: 18px;
+  }
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .card {
+    padding: 20px;
+  }
+  .basket .product {
+    margin: 14px 0;
+  }
+  .case-picture {
+    height: 80px;
+    width: 50px;
+  }
+  .heading {
+    margin: 16px 0;
+  }
+  h1 {
+    font-size: 26px;
+  }
+  .badge {
+    max-width: 150px;
+    text-align: center;
+  }
+  .row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .section-top {
+    gap: 10px;
+  }
+}

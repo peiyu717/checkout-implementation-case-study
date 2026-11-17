@@ -1,0 +1,22 @@
+{
+  "name": "case-demo-flow",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Checkout.com sandbox Flow checkout, based on the official get-started example",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "test": "node --test test/*.test.js",
+    "test:browser": "node --env-file-if-exists=.env test/browser.mjs",
+    "test:journey": "node test/journey.mjs"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.1"
+  }
+}

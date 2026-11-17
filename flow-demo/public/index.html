@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CASE / Checkout</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/" aria-label="CASE home">CASE<span> / </span>HK</a
+      ><span class="badge" data-i18n="sandbox">Sandbox · no real charges</span>
+    </header>
+    <main>
+      <div class="heading">
+        <p class="eyebrow" data-i18n="step">ONE CASE. A SIMPLE CHECKOUT.</p>
+        <h1 data-i18n="title">Complete your order</h1>
+      </div>
+      <div class="layout">
+        <!-- the fixed basket is visible throughout payment, errors and the result journey. -->
+        <aside class="card basket">
+          <h2 data-i18n="summary">Order summary</h2>
+          <div class="product">
+            <div class="case-picture" aria-hidden="true"><span></span></div>
+            <div>
+              <h3 data-i18n="product">Everyday iPhone case</h3>
+              <p data-i18n="variant">Sage · quantity 1</p>
+            </div>
+          </div>
+          <div class="total">
+            <span data-i18n="total">Total</span><strong id="total"></strong>
+          </div>
+          <p class="muted" data-i18n="pricing">
+            Price: HK$100 or €12, depending on the selected currency.
+          </p>
+          <p class="reference" id="reference"></p>
+        </aside>
+        <section class="card checkout" aria-labelledby="payment-title">
+          <div class="section-top">
+            <h2 id="payment-title" data-i18n="payment">Payment details</h2>
+            <label class="language-label"
+              ><span data-i18n="language">Language</span
+              ><select id="locale" aria-label="Language">
+                <option value="en-GB">English</option>
+                <option value="zh-HK">繁體中文（香港）</option>
+                <option value="nl-NL">Nederlands</option>
+              </select></label
+            >
+          </div>
+          <!-- currency, billing country and language are independent. No delivery form. -->
+          <form id="details">
+            <fieldset id="settings">
+              <div class="row">
+                <label
+                  ><span data-i18n="currency">Currency</span
+                  ><select id="currency" name="currency">
+                    <option value="HKD">HKD — Hong Kong dollar</option>
+                    <option value="EUR">EUR — Euro</option>
+                  </select></label
+                ><label
+                  ><span data-i18n="country">Billing country / region</span
+                  ><select id="country" name="country" required></select
+                ></label>
+              </div>
+              <label
+                ><span data-i18n="name">Customer name</span
+                ><input
+                  id="name"
+                  name="name"
+                  autocomplete="name"
+                  maxlength="100"
+                  minlength="2"
+                  required
+              /></label>
+              <label
+                ><span data-i18n="email">Email address</span
+                ><input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  maxlength="254"
+                  required
+              /></label>
+            </fieldset>
+            <p class="muted" data-i18n="changeNote">
+              Changing details reloads the payment form. Card information must
+              be entered again.
+            </p>
+            <button id="continue" type="submit" data-i18n="continue">
+              Continue to secure payment
+            </button>
+          </form>
+          <div id="status" role="status" aria-live="polite" tabindex="-1"></div>
+          <!-- Flow owns the card fields; our page has no PAN, expiry or CVV inputs. -->
+          <div id="flow-container"></div>
+          <div class="actions">
+            <button
+              id="check"
+              class="secondary"
+              type="button"
+              hidden
+              data-i18n="check"
+            >
+              Check payment status</button
+            ><button
+              id="back"
+              class="secondary"
+              type="button"
+              hidden
+              data-i18n="back"
+            >
+              Back to checkout</button
+            ><button id="new-order" type="button" hidden data-i18n="newOrder">
+              Start a new order
+            </button>
+          </div>
+          <p class="security-note" data-i18n="security">
+            Card details are collected securely by Checkout.com. Use sandbox
+            test cards only.
+          </p>
+        </section>
+      </div>
+    </main>
+    <footer data-i18n="footer">Secure checkout powered by Checkout.com</footer>
+    <!-- load Flow directly from the official CDN. Never bundle or self-host this script. -->
+    <script src="https://checkout-web-components.checkout.com/index.js"></script>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
