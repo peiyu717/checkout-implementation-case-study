@@ -2,6 +2,22 @@
 
 A fixed basket for one iPhone case: HKD 100.00 or EUR 12.00. Express creates a Checkout.com Payment Session, and the browser mounts Flow from the official CDN. Card fields and 3DS are handled by Flow; the application receives an opaque submission token, never raw card data.
 
+## Part 2 — Checkout demo
+
+- Fixed basket for one iPhone case, using the supplied color palette.
+- Embedded card payments with Checkout.com Flow hosted fields.
+- Server-side Payment Session creation, custom submission and payment-status retrieval.
+- Successful sandbox card payments confirmed as Captured.
+- Result handling for successful, declined and pending payments, with explicit retry after a decline and duplicate-submission protection.
+- Responsive checkout layout and in-memory order storage, with no database required.
+
+## Part 3 — Additional customizations
+
+- Collect customer name and email and pass them to the payment API; display and prefill Flow's hosted cardholder-name field.
+- Support English, Traditional Chinese (Hong Kong) and Dutch in the checkout page and Flow.
+- Process HKD and EUR payments using server-controlled prices: HKD 100.00 and EUR 12.00.
+- Enable 3DS, request a challenge and disable non-3DS fallback. Successful and failed authentication paths were tested, including a successful retry under the same order reference.
+
 ## Run
 
 Use Node.js 22.12+ and the assignment's **Part 2** sandbox credentials.
@@ -45,7 +61,7 @@ This suite uses official sandbox test cards and performs sandbox payments. It co
 
 ## Validation
 
-On 17 November 2026, 20 local tests, four synthetic browser checks and 24 live sandbox checks passed. HKD/EUR payments and the decline-to-retry flow reached Captured. The live suite used `ENABLE_RISK=false`; leaving 3DS remained Pending with retry blocked. Apple Pay and actual webhook delivery were not exercised.
+On 17 November 2026, 20 local tests, four synthetic browser checks and 24 live sandbox checks passed. HKD/EUR payments and the decline-to-retry flow reached Captured. The live suite used `ENABLE_RISK=false`; leaving 3DS remained Pending with retry blocked.
 
 ## Implementation
 
@@ -59,15 +75,11 @@ Orders and attempts are in memory, as permitted by the brief. A restart invalida
 
 Logs are written to `logs/payments.jsonl` and the terminal, using reference, attempt ID and payment ID for correlation. Keys, names, emails, card fields, session tokens and raw provider responses are excluded. Log failures do not interrupt payment handling.
 
-## Optional integrations and limits
+## Sandbox configuration
 
 **Sandbox risk screening:** `.env.example` sets `ENABLE_RISK=false` to isolate functional testing from shared-account risk rules. Set it to `true` to exercise screening; an unset value also enables it. A valid payment can then be declined by risk rules (for example, code 42101), including on retry. This switch is limited to the sandbox-only application.
 
-**Apple Pay:** `ENABLE_APPLE_PAY=true` adds it to the session allowlist. It remains disabled by default because merchant onboarding, domain verification and a payment with an eligible wallet/device have not been completed. Do not treat an accepted session as proof of wallet payment support.
-
-**Webhooks:** configure `CKO_WEBHOOK_SECRET` and an HTTPS receiver for `POST /webhooks/checkout`. The receiver validates the raw-body HMAC signature, checks payment correlation, deduplicates event IDs and prevents late events from reversing a captured state. It handles `payment_approved`, `payment_captured` and `payment_declined`. Real registration/delivery is unverified; the included tests use synthetic signed events. API retrieval alone does not mark a webhook as received.
-
-3DS is enabled with non-3DS fallback disabled and a challenge requested. The issuer controls the authentication experience. Closing authentication can leave a payment pending; it does not establish cancellation. Hosted fields reduce exposure to card data but are not a claim of PCI certification. This demo has no fulfillment or refunds.
+3DS is enabled with non-3DS fallback disabled and a challenge requested. The issuer controls the authentication experience. Closing authentication can leave a payment pending; it does not establish cancellation. Hosted fields reduce exposure to card data but are not a claim of PCI certification. 
 
 ## References
 
@@ -75,4 +87,3 @@ Logs are written to `logs/payments.jsonl` and the terminal, using reference, att
 - [Payment Sessions and custom submission](https://api-reference.checkout.com/tag/flow)
 - [Payment retrieval](https://api-reference.checkout.com/tag/payments)
 - [Sandbox test cards](https://www.checkout.com/docs/developer-resources/testing/test-cards)
-- [Apple Pay domain verification](https://support.checkout.com/hc/en-us/articles/31004039588754-How-to-verify-a-domain-for-Apple-Pay-when-using-Flow)
